@@ -1,0 +1,160 @@
+
+需要在overleaf画出来图来，或者execal，把已有的实验结果放上去，然后再跑新的实验
+
+
+核心是清晰的add。全padding的可以放在ablation study
+
+
+第一个表纯inference。
+
+用starcoder2重新跑schema linking。也许是需要的，同时思考怎么加入有意思的东西
+
+第二个表纯finetune。
+
+
+第一个表就丢最种的效果，第二个再放说我们框架种的一部分对已有模型都是有提升的。即可。
+先不要扣那么细，先别当成schema linking paper
+
+
+
+待执行的脚本
+    1. 当spider的evalTrain执行结束后 【codellama 13b】
+        (🌟Eval/eval_ours_SchemaLinking_spider.sh       生成sft数据集
+        (🌟FT/FAR_add/sft_t2s-codesStyle-FAR-json-add_codellama13b_spider.sh       8个，可以分别执行
+        (🌟Eval/eval_ours_t4c4_pt1c2-spider-WR.sh
+        (🌟Eval/eval_ours_t5c6_pt2c3-spider-WR.sh      各有8个，分别执行
+    2. BIRD上 codellama-13b 的 few-shot
+        eval_fewshot_bird-WR.sh
+        需要跑在不同schema linking上的效果。
+        5 shot的跑完了，居然onlySLM的效果是最好的，也许是padding的太多，导致不够集中。简单试试t4c4的
+
+        eval_DAILSQL_bird-WR.sh
+
+        eval_fewshot_bird-WR.sh
+            - 正在跑5-shot的3种SL方法
+        eval_fewshot_spider.sh
+            等待train数据集上的SL结果跑完
+
+        先按照shot一个一个测，看不同shot对不同schema linking方法有咩有提升。
+    4. Codes-15b上也是，需要跑一下few-shot
+        0620 跑一下看看
+        微调的方法不要再跑few-shot。只对没有经过微调的方法
+
+    3. 目前最有的dataset和最优的eval方法下，不同的llms和超参数
+        ganita20b:正在跑
+        starcoder2-15b:正在跑
+        codellama-7b
+        llama3-7b
+
+
+    x. MCS-SQL
+        (🌟2个数据集都需要在eval上再跑一下question masking。这种question mask的结果也可以给DAIL-SQL使用
+        eval_msc-sql_codellama13b-WR.sh
+        (🌟需要完成根据question mask来eval的代码，这块其实可以在eval_ours.py里写，或者同时写，因为都能用到。
+            这部分代码在DAIL-SQL那边做了简单的实现（需要检查论文查看具体的计算方式，目前大概是实现了）
+            （也不是吧？？我记得DAIL是要预先生成一遍SQL，再根据这个检索
+            （对的，我现在实现的那一坨其实是MCS-SQL的思想，mask和不mask都计算。
+            （这个mask的思想我也可以借鉴到我的框架里面，LLMs真的厉害，没想到codellama的效果这么好，
+            但其实也许我用20b甚至34b的模型做这些in-context-learning的回更好）
+    L.对于question mask，可以放一个34B的codellama，也许效果会更好。但其实我不会评估怎么算好的question masking。可以简单试试看。
+
+
+
+
+
+baseline：
+1. codellama-13b的few-shot。
+    原版已经跑过了
+    需要测试在新schema linking上的结果。
+    是否需要测试在2种schema linking方法上的结果？？？ 可以测试。其实就类似于codes的做法；先以codes和codellama为主，然后是20b的模型
+
+
+大模型：CodeS-15b，CodeLlama-13B （gantia20b）
+
+算法：
+    1. 0-1-3-5 few shot
+    2. MSC-SQL，Chess，DAIL-SQL
+    3. GPT4-based方法
+
+SL方法：
+    1. filter
+    2. Roberta-3B
+    3. ours
+
+
+最后再介绍自己的SFT模型。
+
+
+
+
+
+
+记录已经执行过的实验
+
+### Schema-linking
+    log_eval_bird_dev_sg-t2sTsl-fullS-d-codesStyle_codellama13b_beam-2_checkpoint-1800
+    测试最好的SL prompt，发现还是简单地full-d noType适合一些
+
+sg-t2sTsl-fullS-d, evalTrain_spider_train_sg-t2sTsl-fullS-d_codellama13b_checkpoint-1800_beam-4
+    结束后，可以跑利用这个生成codellama-13b的训练数据的，然后看看自己训练的codellama在add的情况下达到什么样的准确度。
+
+
+
+### t2s-codesStyle-FAR-json-add
+
+(🌟也许，bird的结果需要在新的beam-4的SLM上重新评估一下
+Results_eval_bird_dev_sg-t2sTsl-fullS-d_codellama13b_checkpoint-1800_beam-4_relevant_columns.json
+
+以下来自
+Results_eval_sg_t2s-sl_fullS-d_codellama13b_beam-2_checkpoint-1800_bird_dev_relevant_columns.json
+效果一般的：
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt20c20-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt20c20-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt5c6-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t4c4_pt1c2
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt5c6-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t4c4_pt1c2
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c8-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t4c4_pt1c2
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c8-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t4c4_pt1c2
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c10-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t4c4_pt1c2
+
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c8-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt5c6-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+
+上59的
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c10-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t4c4_pt1c2
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c10-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3 （🌟59.65）
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c10-Pt1c2_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt6c8-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+    log_eval_bird_dev_t2s-codesStyle-FAR-json-add-Tt5c6-Pt2c3_codellama13b_bs16lr1e-4_checkpoint-1800_IN_t2s-codesStyle-json-filtered-add_beam-4_t5c6_pt2c3
+
+
+## Few-shot ICL
+    (🌟需要跑一下在优化inference schema linking情况下的Few-shot ICL结果，也算是给baseline的提升)
+
+
+### MCS-SQL
+    (🌟这块慢慢跑完codellama的结果即可，全搞完后可以看看20b的效果。但如果20b在我自己的方法上没有提升，我也不会考虑加入。)
+    目前，可以写好column matching的代码，跑一下bird和spider，估计每个都要很多天。占2张卡。结束后可以跑sql generation的代码，就用codes的匹配方法。
+
+
+
+    log_eval_MCS-SQL_codellama13b_spider_train_question-mask_beam-1
+        对spider做question-mask，为后面的做准备
+
+    log_eval_MCS-SQL_codellama13b_spider_dev_table-linking_beam-4_prompt-2
+        16:20:51，spider的table linking。后面也许都会用beam-4_prompt-2这套设置，不然太贵了。
+
+    log_eval_MCS-SQL_codellama13b_bird_train_question-mask_beam-1
+        46:13:23
+
+    log_eval_MCS-SQL_codellama13b_bird_dev_table-linking_beam-4_prompt-2
+        27:39:17 ，bird的table linking。
+
+    log_eval_MCS-SQL_codellama13b_bird_dev_table-linking_beam-4_prompt-5
+        69:18:19
+
+    log_eval_MCS-SQL_codellama13b_bird_dev_table-linking_beam-1_prompt-5
+        38:56:38
+
+    log_eval_MCS-SQL_codellama13b_bird_dev_table-linking_beam-4_prompt-1
+        13:51:03
+
