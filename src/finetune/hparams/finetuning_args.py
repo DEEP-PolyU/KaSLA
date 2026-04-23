@@ -104,7 +104,6 @@ class RLHFArguments:
     ppo_whiten_rewards: Optional[bool] = field(
         default=False, metadata={"help": "Whiten the rewards before compute advantages in PPO training."}
     )
-    # 这里专门给reference model设计了path，但实际操作中目前还没有用过
     ref_model: Optional[str] = field(
         default=None, metadata={"help": "Path to the reference model used for the PPO or DPO training."}
     )

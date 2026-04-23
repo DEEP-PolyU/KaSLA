@@ -114,13 +114,6 @@ class CustomPPOTrainer(PPOTrainer, Trainer):
         loss_mask = labels != self.label_pad_token_id
         # dummy token; we'll ignore the losses on these tokens later
         labels[labels == self.label_pad_token_id] = 0
-        # 计算预测的候选词概率中label token的概率，越大越好
-        # 如果仅仅是softmax，得到的结果差距很小很小，拉不开差距
-        # 我有点不想尝试这个代码了，因为motivation根本没想好，现在就是换一种套路的sft，完全没有insight，
-        # 我应该去思考sft那边应该怎么搞。放上去一个llama3先训练起来看看
-        # 给每个token各自的reward是合理的，不采用KL也是合理的，SQL这里完全没必要采用KL。想象不出来有什么切实意义
-        # 当然，也许保留是有价值的。
-        # 并且我也不觉得sft model作为critic model有什么用， 我还没想清楚这个点
         print("logits.size() {}".format(logits.size()))
         print("logits {}".format(logits))
         print("logits.log_softmax(-1).size() {}".format(logits.log_softmax(-1).size()))

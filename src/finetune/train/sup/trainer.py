@@ -336,7 +336,6 @@ class SupTrainer(Seq2SeqTrainer):
             labels = inputs.pop("labels")
         else:
             labels = None
-        # 似乎额外生成了一个新的model，占了大量显存;但ppo那边好像还好，显存挺低的，没清楚为什么
         # unwrapped_model=self.accelerator.unwrap_model(model)
         # unwrapped_model.gradient_checkpointing_disable()
         # with torch.no_grad():

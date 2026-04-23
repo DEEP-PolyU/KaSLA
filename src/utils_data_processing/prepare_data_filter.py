@@ -536,8 +536,6 @@ def filter_schema_filtered_and_rankingSL(dataset, schema_linking_file, sic, num_
             else:
                 sic_column_probs = sic_pred_results[table_idx]["column_probs"]
 
-                # 这种情况下 t4c4_p1c2实际上是第二行好，但45c6_p2c3第一行好，并是目前最高值
-                # 所以我加入了and num_top_k_columns>4的判断条件
                 if "add" in mode and num_top_k_columns>4:
                     column_indices = np.argsort(-np.array(sic_column_probs), kind="stable")[:c_padding].tolist()
                 else:
@@ -1668,7 +1666,6 @@ def filter_and_write_schema_ranking(dataset, dataset_type, sic, num_top_k_tables
             table_probs = [pred_result["table_prob"] for pred_result in pred_results]
             table_indices = np.argsort(-np.array(table_probs), kind="stable")[:num_top_k_tables].tolist()
         elif dataset_type == "train":
-            # table_label应该是根据ground truth sql标注的
             table_indices = [table_idx for table_idx, table_label in enumerate(data["table_labels"]) if
                              table_label == 1]
             # print("table_indices")
@@ -1881,8 +1878,6 @@ def filter_and_write_schema_filtered_and_rankingSL(dataset, schema_linking_file,
                 #     print("No column padding")
             else:
                 sic_column_probs = sic_pred_results[table_idx]["column_probs"]
-                # 这种情况下 t4c4_p1c2实际上是第二行好，但45c6_p2c3第一行好，并是目前最高值
-                # 所以我加入了and num_top_k_columns>4的判断条件
                 if "add" in mode and num_top_k_columns>4:
                     column_indices = np.argsort(-np.array(sic_column_probs), kind="stable")[:c_padding].tolist()
                 else:
@@ -2056,7 +2051,6 @@ def filter_schema_codesStyle_ranking_cut(dataset, dataset_type, sic, num_top_k_t
             # table_indices = np.argsort(-np.array(table_probs), kind="stable")[:num_top_k_tables].tolist()
 
         elif dataset_type == "train":
-            # table_label应该是根据ground truth sql标注的
             table_indices = [table_idx for table_idx, table_label in enumerate(data["table_labels"]) if
                              table_label == 1]
             # print("table_indices")
@@ -2258,7 +2252,6 @@ def filter_schema_codesStyle(dataset, dataset_type, sic, num_top_k_tables=6, num
             table_probs = [pred_result["table_prob"] for pred_result in pred_results]
             table_indices = np.argsort(-np.array(table_probs), kind="stable")[:num_top_k_tables].tolist()
         elif dataset_type == "train":
-            # table_label应该是根据ground truth sql标注的
             table_indices = [table_idx for table_idx, table_label in enumerate(data["table_labels"]) if
                              table_label == 1]
             # print("table_indices")
@@ -2307,8 +2300,6 @@ def filter_schema_codesStyle(dataset, dataset_type, sic, num_top_k_tables=6, num
                 tc_name = "{}.{}".format(table_names[table_idx], column_name)
                 if tc_name in data["matched_contents"]:
                     filtered_matched_contents[tc_name] = data["matched_contents"][tc_name]
-                # 5.12仔细研究一下，这个matched_contents的逻辑，看起来是为了匹配question中的关键词，并不是单纯寻找matching column，
-                # 回顾论文里的以及github里面的信息，看看我们自己
 
         # extract foreign keys among remianed tables
         filtered_table_names = [table_names[table_idx] for table_idx in table_indices]

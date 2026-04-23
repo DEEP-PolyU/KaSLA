@@ -63,7 +63,6 @@ def init_adapter(
             else:
                 param.data = param.data.to(torch.float32)
 
-    # finetuning_type默认是lora，说明eval的时候不需要传也是lora
     if finetuning_args.finetuning_type == "lora":
         logger.info("Fine-tuning method: LoRA")
         adapter_to_resume = None
@@ -78,18 +77,12 @@ def init_adapter(
                 assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
                 is_mergeable = False
 
-            # 这里提供了类似断点续train的功能，接着之前的adapter训练
-            # 神奇，那也说明了我在sft的基础上训练ppo的时候，其实可以选择接着sft的adapter来训练，也可以选择额外新建一个adapter
-            # 两种不同做法的差异是什么
             if (is_trainable and not finetuning_args.create_new_adapter) or (not is_mergeable):
                 adapter_to_merge = model_args.adapter_name_or_path[:-1]
                 adapter_to_resume = model_args.adapter_name_or_path[-1]
             else:
                 adapter_to_merge = model_args.adapter_name_or_path  # 平时fintuning走的是这个
 
-            # 这里很关键，需要看懂是怎么运作的，后面的disable_adapter是否会影响sft的adapter（理论上应该不会）
-            # 需要清楚在eval的时候为什么仍然需要传入2个，找到eval时候的代码
-            # 其实不管是eval还是train都会走这一步，因此这就是eval时候的代码，如果之前采用的是resume则eval也只需要传一个adapter path
             # https://blog.csdn.net/liuqixuan1994/article/details/130664198
             # https://github.com/huggingface/peft/pull/263
 
@@ -111,9 +104,6 @@ def init_adapter(
             if adapter_to_resume is not None:  # resume lora training
                 model = PeftModel.from_pretrained(model, adapter_to_resume, is_trainable=is_trainable)
 
-        # 前面是load之前的lora adapter，这里新建adapter。
-        # 根据blog的了解，disable-adapter应该只对ppo lora adapter起作用，因为前阶段的sft lora adapter已经和base model 融合merge了
-        # 也就是此时base model已经是融合sft之后的样子。神奇，上面那篇lora的介绍可以帮助我们后面实现多个lora互相协作
         if is_trainable and adapter_to_resume is None:  # create new lora weights while training
             if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0] == "all":
                 target_modules = find_all_linear_modules(model)
@@ -127,7 +117,6 @@ def init_adapter(
                 "lora_dropout": finetuning_args.lora_dropout,
             }
             # Whether or not to use unsloth's optimization for the LoRA training.
-            # 默认是false
             if model_args.use_unsloth:
                 from unsloth import FastLlamaModel, FastMistralModel  # type: ignore
 

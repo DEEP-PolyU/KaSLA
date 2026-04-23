@@ -112,7 +112,7 @@ def generation_func(model, inputs, tokenizer, max_new_tokens, eos_token_id, num_
                 **this_input,
                 max_new_tokens=max_new_tokens,
                 num_beams=num_beams,
-                num_return_sequences=num_beams,  # 4 留着效果非常差，可能对没训练过的llms不能加这个参数，目前还没有搞明白
+                num_return_sequences=num_beams,
                 use_cache=True,
                 # eos_token_id=eos_token_id,
                 # tempareture=1,

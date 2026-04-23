@@ -43,7 +43,6 @@ def run_align(
         label_pad_token_id=IGNORE_INDEX,
     )
     # Create reference model
-    # 因为用的是lora，这里的ref_model=None
     # If no reference model is provided, the trainer will create a reference model with the same
     #              architecture as the model to be optimized with shared layers.
     ref_model = create_ref_model(model_args, finetuning_args, add_valuehead=True)

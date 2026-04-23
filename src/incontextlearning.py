@@ -149,7 +149,8 @@ class SFTSQLGenerationDataset_eval(Dataset):
 
 
 def execute_sql_bird(predicted_sql,gold_sql, db_path):
-    db_path = db_path.replace("./data/sft_data_collections/bird/dev/dev_databases/", "/home/chen/data/zheng/datasets_SQL/bird/dev/databases/")
+    # Adjust db_path to your local database directory if needed
+    # db_path = db_path.replace("./data/sft_data_collections/bird/dev/dev_databases/", "<your_local_path>")
     conn = sqlite3.connect(db_path)
     # Connect to the database
     cursor = conn.cursor()
@@ -325,7 +326,8 @@ def main():
             for index in range(len(generated_sqls)):
                 generated_sql = generated_sqls[index]
 
-                db_path = raw_data["db_path"].replace("./data/sft_data_collections/bird/dev/dev_databases/", "/home/chen/data/zheng/datasets_SQL/bird/dev/databases/")
+                db_path = raw_data["db_path"]
+                # Adjust db_path to your local database directory if needed
                 execution_error = check_sql_executability(generated_sql, db_path)
                 if execution_error is None:
                     final_generated_sql = generated_sql
@@ -351,7 +353,8 @@ def main():
                     print("generated_relevantColumns_list error")
                     generated_relevantColumns = generated_relevantColumns_list[0]
 
-                db_path = raw_data["db_path"].replace("./data/sft_data_collections/bird/dev/dev_databases/", "/home/chen/data/zheng/datasets_SQL/bird/dev/databases/")
+                db_path = raw_data["db_path"]
+                # Adjust db_path to your local database directory if needed
                 execution_error = check_sql_executability(generated_sql, db_path)
                 if execution_error is None:
                     final_generated_sql = generated_sql
